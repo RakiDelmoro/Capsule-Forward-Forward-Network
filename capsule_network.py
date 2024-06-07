@@ -82,7 +82,7 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
     def training_forward_pass(train_dataloader: torch.Tensor):
         for capsule_wide_idx in range(capsule_wide):
             for layer_idx, layer in enumerate(layers):
-                optimizer = torch.optim.Adam(layers_parameter[layer_idx], lr)
+                optimizer = torch.optim.Adam(layers_parameters[layer_idx], lr)
                 train_dataloader = layer_forward_pass(train_dataloader, layer, layer_idx, capsule_wide_idx, optimizer)
 
     def runner(train_loader, test_image, test_label):
