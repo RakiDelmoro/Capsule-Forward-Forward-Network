@@ -5,13 +5,13 @@ from layer import ff_layer
 from network_utils import initialize_layers_and_parameters, rotate_feature, input_feature_view
 
 def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: int, activation_function, lr: float, device: str, capsule_tall: int, capsule_wide: int, rotation_amount: int):
-    layers, parameters = initialize_layers_and_parameters(feature_sizes, activation_function, device)
+    layers, layers_parameter = initialize_layers_and_parameters(feature_sizes, activation_function, device)
 
     # first_layer_feature_size = (input_feature + input_feature % capsule_tall) // capsule_tall + feature_sizes[-1] + 1
     first_layer_feature_size = (input_feature + input_feature % capsule_tall) // capsule_tall + 1
     first_layer, w, b = ff_layer(first_layer_feature_size, feature_sizes[0], activation_function, device)
     layers.insert(0, first_layer)
-    parameters.insert(0, [w, b])
+    layers_parameter.insert(0, [w, b])
 
     def capsule_layer(input_data_features: torch.Tensor, layer, layer_idx: int, capsule_wide_idx: int):
         capsule_wide_idx_as_tensor = torch.full([input_data_features.shape[0], capsule_tall, 1], capsule_wide_idx, device="cuda")
@@ -82,7 +82,7 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
     def training_forward_pass(train_dataloader: torch.Tensor):
         for capsule_wide_idx in range(capsule_wide):
             for layer_idx, layer in enumerate(layers):
-                optimizer = torch.optim.Adam(parameters[layer_idx], lr)
+                optimizer = torch.optim.Adam(layers_parameter[layer_idx], lr)
                 train_dataloader = layer_forward_pass(train_dataloader, layer, layer_idx, capsule_wide_idx, optimizer)
 
     def runner(train_loader, test_image, test_label):
