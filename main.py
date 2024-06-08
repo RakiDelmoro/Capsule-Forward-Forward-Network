@@ -18,8 +18,7 @@ def main():
     train_loader = DataLoader(training_data, batch_size=BATCH_SIZE, shuffle=True)
 
     hidden_layers = [100] * 100
-    feature_sizes = [input_feature_size] + hidden_layers
-    model_runner = capsule_neural_network(feature_sizes=feature_sizes, input_feature=input_feature_size, threshold=2.0, activation_function=torch.nn.functional.relu, lr=LEARNING_RATE, device="cuda", capsule_tall=1, capsule_wide=1, rotation_amount=1)
+    model_runner = capsule_neural_network(feature_sizes=hidden_layers, input_feature=input_feature_size, threshold=2.0, activation_function=torch.nn.functional.relu, lr=LEARNING_RATE, device="cuda", capsule_tall=1, capsule_wide=1, rotation_amount=1)
     model_runner(train_loader, images_with_combined_labels, labels)
 
 main()

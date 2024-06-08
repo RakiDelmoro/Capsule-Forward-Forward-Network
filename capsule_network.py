@@ -26,8 +26,9 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
         return rotate_feature(capsule_outputs, rotation_amount, layer_idx)
     
     def layer_forward_pass(dataloader, layer, layer_idx, capsule_wide_idx, optimizer):
+        print("Training layer...")
         bad_epoch = 0
-        current_epoch = 0
+        epoch = 0
         best_loss = None
         previous_loss = None
         while True:
@@ -49,6 +50,8 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
                 lossess_for_each_batch.append(layer_loss.item())
             
             average_loss_for_whole_batch = statistics.fmean(lossess_for_each_batch)
+            print(f'\r Epoch: {epoch} Layer: {layer_idx+1} average loss for each batch: {average_loss_for_whole_batch}', end='', flush=True)
+
             if best_loss is None:
                 best_loss = average_loss_for_whole_batch
             elif average_loss_for_whole_batch < best_loss:
@@ -66,7 +69,7 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
                 print(f"Done training layer: {layer_idx+1}")
                 break
             previous_loss = average_loss_for_whole_batch
-            current_epoch += 1
+            epoch += 1
 
                 # Forward pass once for next layer
         def forward_for_next_layer(dataloader, layer):
