@@ -9,15 +9,16 @@ def initialize_layers_and_parameters(layers_feature_sizes, activation_function, 
     layers_parameters = []
 
     for size in range(len(layers_feature_sizes)-1):
-        input_feature = layers_feature_sizes[size] + 1
+        input_feature = layers_feature_sizes[size] #+ 1
         output_feature = layers_feature_sizes[size+1]
+        # TODO: We make the input feature as we go each column
         layer, w, b = ff_layer(input_feature, output_feature, activation_function, device)
         layers.append(layer)
         layers_parameters.extend([[w, b]])
 
     return layers, layers_parameters
 
-def input_feature_view(x: torch.Tensor, capsule_tall):
+def capsulate_input_feature(x: torch.Tensor, capsule_tall):
     assert x.shape[-1] % capsule_tall == 0, f'{capsule_tall} should divisible by {x.shape[-1]}'
     input_view = x.shape[-1] // capsule_tall
     new_input_shape = x.shape[:-1] + (capsule_tall, input_view)
