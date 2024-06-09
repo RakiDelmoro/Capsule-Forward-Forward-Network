@@ -46,7 +46,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
 
                 if bad_epoch > 5:
                     print(f"Done training layer: {layer_param+1} of all column capsule")
-                    dataloader = forward_once_for_next_layer(dataloader, layer)
+                    dataloader = forward_once_for_capsule_wide(dataloader, layer)
                     break
 
                 previous_loss = capsule_column_loss
@@ -68,7 +68,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
 
         return torch.concat(positive_column_capsule_outputs, dim=1), torch.concat(negative_column_capsule_outputs, dim=1)
 
-    def forward_once_for_next_layer(dataloader, layer, layer_idx):
+    def forward_once_for_capsule_wide(dataloader, layer, layer_idx):
         previous_capsule_wide_output = []
         for positive_data, negative_data in dataloader:
             capsulated_positive_data = capsulate_input_feature(positive_data, capsule_tall)
