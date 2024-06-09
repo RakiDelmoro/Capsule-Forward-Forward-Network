@@ -4,27 +4,28 @@ from test_network import validation_forward_pass
 from layer import ff_layer
 from network_utils import initialize_layers_and_parameters, rotate_feature, input_feature_view
 
-def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: int, activation_function, lr: float, device: str, capsule_tall: int, capsule_wide: int, rotation_amount: int):
-    layers, layers_parameters = initialize_layers_and_parameters(feature_sizes, activation_function, device)
+def capsule_neural_network(capsule_feature_size: list, input_feature: int, threshold: int, activation_function, lr: float, device: str, capsule_tall: int, capsule_wide: int, rotation_amount: int):
+    layers, layers_parameters = initialize_layers_and_parameters(capsule_feature_size, activation_function, device)
 
     # first_layer_feature_size = (input_feature + input_feature % capsule_tall) // capsule_tall + feature_sizes[-1] + 1
     first_layer_feature_size = (input_feature + input_feature % capsule_tall) // capsule_tall + 1
-    first_layer, w, b = ff_layer(first_layer_feature_size, feature_sizes[0], activation_function, device)
+    first_layer, w, b = ff_layer(first_layer_feature_size, capsule_feature_size[0], activation_function, device)
     layers.insert(0, first_layer)
     layers_parameters.insert(0, [w, b])
 
-    def capsule_layer(positive_data, negative_data, layer, layer_idx: int, capsule_wide_idx: int):
-        capsule_wide_idx_as_tensor = torch.full([positive_data.shape[0], capsule_tall, 1], capsule_wide_idx, device="cuda")
-        positive_phase = torch.concat([positive_data, capsule_wide_idx_as_tensor], dim=-1)
-        negative_phase = torch.concat([negative_data, capsule_wide_idx_as_tensor], dim=-1)
-
+    def capsule_column_forward(positive_data, negative_data, layer, capsule_wide_idx, layer_idx: int):
         capsule_positive_outputs = []
         capsule_negative_outputs = []
         for vertical_capsule_index in range(capsule_tall):
+            capsule_wide_idx_as_tensor = torch.full([positive_data.shape[0], capsule_tall, 1], capsule_wide_idx, device="cuda")
+            positive_phase = torch.concat([input_feature_view(positive_data), capsule_wide_idx_as_tensor], dim=-1)
+            negative_phase = torch.concat([input_feature_view(negative_data), capsule_wide_idx_as_tensor], dim=-1)
+
             positive_input_view_features = positive_phase[:, vertical_capsule_index, :]
             negative_input_view_features = negative_phase[:, vertical_capsule_index, :]
             positive_phase_output = layer(positive_input_view_features)
             negative_phase_output = layer(negative_input_view_features)
+
             capsule_positive_outputs.append(positive_phase_output)
             capsule_negative_outputs.append(negative_phase_output)
 
@@ -39,7 +40,7 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
             capsule_wide_idx_as_tensor = torch.full([positive_data.shape[0], capsule_tall, 1], capsule_wide_index, device="cuda")
             positive_phase = input_feature_view(positive_data, capsule_tall)
             negative_phase = input_feature_view(negative_data, capsule_tall)
-            
+
             capsule_positive_outputs = []
             capsule_negative_outputs = []
             for vertical_capsule_index in range(capsule_tall):
@@ -58,7 +59,7 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
         
         return previous_output
     
-    def layer_forward_pass(dataloader, layer, layer_idx, capsule_wide_idx, optimizer):
+    def capsule_forward_pass(dataloader, layer, layer_idx, capsule_wide_idx, optimizer):
         print("Training layer...")
         bad_epoch = 0
         epoch = 0
@@ -67,9 +68,7 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
         while True:
             lossess_for_each_batch = []
             for positive_data, negative_data in dataloader:
-                positive_feature_viewed = input_feature_view(positive_data, capsule_tall)
-                negative_feature_viewed = input_feature_view(negative_data, capsule_tall)
-                positive_features, negative_features = capsule_layer(positive_feature_viewed, negative_feature_viewed, layer, layer_idx, capsule_wide_idx)
+                positive_features, negative_features = capsule_column_forward(positive_data, negative_data, layer, layer_idx)
                 positive_phase_activation = positive_features.pow(2).mean(dim=1)
                 negative_phase_activation = negative_features.pow(2).mean(dim=1)
                 layer_loss = torch.log(1 + torch.exp(torch.cat([
@@ -103,10 +102,10 @@ def capsule_neural_network(feature_sizes: list, input_feature: int, threshold: i
             epoch += 1
 
     def training_forward_pass(train_dataloader: torch.Tensor):
-        for capsule_wide_idx in range(capsule_wide):
+        for capsule_idx in range(capsule_wide):
             for layer_idx, layer in enumerate(layers):
                 optimizer = torch.optim.Adam(layers_parameters[layer_idx], lr)
-                train_dataloader = layer_forward_pass(train_dataloader, layer, layer_idx, capsule_wide_idx, optimizer)
+                train_dataloader = capsule_forward_pass(train_dataloader, layer, layer_idx, capsule_idx, optimizer)
 
     def runner(train_loader, test_image, test_label):
         training_forward_pass(train_loader)
