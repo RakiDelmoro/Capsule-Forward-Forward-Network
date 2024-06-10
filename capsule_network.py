@@ -1,16 +1,10 @@
 import torch
 import statistics
 from test_network import validation_forward_pass
-from layer import ff_layer
-from network_utils import initialize_layers_and_parameters, rotate_feature, capsulate_input_feature
+from network_utils import initialize_capsule_layers_and_parameters, rotate_feature, capsulate_input_feature
 
 def capsule_neural_network(capsule_feature_size: list, input_feature: int, threshold: int, activation_function, lr: float, device: str, capsule_tall: int, capsule_wide: int, rotation_amount: int):
-    layers, layers_parameters = initialize_layers_and_parameters(capsule_feature_size, activation_function, device)
-
-    first_layer_feature_size = (input_feature + input_feature % capsule_tall) // capsule_tall # + 1 
-    first_layer, w, b = ff_layer(first_layer_feature_size, capsule_feature_size[0], activation_function, device)
-    layers.insert(0, first_layer)
-    layers_parameters.insert(0, [w, b])
+    layers, layers_parameters = initialize_capsule_layers_and_parameters(capsule_feature_size, input_feature, capsule_tall, activation_function, device)
 
     def train_capsule_column(dataloader):
         for layer_param, layer in enumerate(layers):
@@ -20,7 +14,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
             best_loss = None
             previous_loss = None
             while True:
-                positive_features, negative_features = capsule_column_forward_pass(dataloader, layer)
+                positive_features, negative_features = forward_in_each_capsule_layer(dataloader, layer)
                 capsule_column_activation_for_positive_phase = positive_features.pow(2).mean(1)
                 capsule_column_activation_for_negative_phase = negative_features.pow(2).mean(1)
                 capsule_column_loss = torch.log(1 + torch.exp(torch.cat([
@@ -46,13 +40,15 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
 
                 if bad_epoch > 5:
                     print(f"Done training layer: {layer_param+1} of all column capsule")
-                    dataloader = forward_once_for_capsule_wide(dataloader, layer)
+                    dataloader = forward_once_for_next_layer_in_capsule(dataloader, layer)
                     break
 
                 previous_loss = capsule_column_loss
                 current_epoch += 1
 
-    def capsule_column_forward_pass(dataloader, layer):
+        return dataloader
+
+    def forward_in_each_capsule_layer(dataloader, layer):
         positive_column_capsule_outputs = []
         negative_column_capsule_outputs = []
         for positive_data, negative_data in dataloader:
@@ -68,7 +64,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
 
         return torch.concat(positive_column_capsule_outputs, dim=1), torch.concat(negative_column_capsule_outputs, dim=1)
 
-    def forward_once_for_capsule_wide(dataloader, layer, layer_idx):
+    def forward_once_for_next_layer_in_capsule(dataloader, layer, layer_idx):
         previous_capsule_wide_output = []
         for positive_data, negative_data in dataloader:
             capsulated_positive_data = capsulate_input_feature(positive_data, capsule_tall)
@@ -87,10 +83,13 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
             previous_capsule_wide_output.append((positive_features, negative_features))
 
         # TODO: take the input of each capsule tall and concatenate that with previous capsule wide output to input for the next capsule wide
-
         return previous_capsule_wide_output
+    
+    def capsule_forward_pass(dataloader):
+        for _ in range(capsule_wide):
+            dataloader = train_capsule_column(dataloader)
 
-    return train_capsule_column
+    return capsule_forward_pass
 
 x = torch.randn(1, 12, device="cuda")
 y = torch.randn(1, 12, device="cuda")

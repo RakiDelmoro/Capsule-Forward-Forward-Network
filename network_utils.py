@@ -4,15 +4,26 @@ import numpy as np
 from layer import ff_layer
 from features import GREEN, RESET, RED
 
-def initialize_layers_and_parameters(layers_feature_sizes, activation_function, device):
+def initialize_capsule_layers_and_parameters(layers_feature_sizes, input_feature, capsule_tall, activation_function, device):
     layers = []
     layers_parameters = []
+    for layer_idx in range(len(layers_feature_sizes)):
+        first_layer = layer_idx == 0
+        if first_layer:
+            first_layer_input_feature = (input_feature + input_feature % capsule_tall) // capsule_tall
+            first_layer_output_feature = layers_feature_sizes[layer_idx+1]
+            layer, w, b = ff_layer(first_layer_input_feature, first_layer_output_feature, activation_function, device)
+        else:
+            last_layer = layer_idx == len(layers_feature_sizes) - 1
+            if last_layer:
+                last_layer_input_feature = layers_feature_sizes[layer_idx]
+                last_layer_output_feature = (input_feature + input_feature % capsule_tall) // capsule_tall
+                layer, w, b = ff_layer(last_layer_input_feature, last_layer_output_feature, activation_function, device)
+            else:
+                input_feature = layers_feature_sizes[layer_idx]
+                output_feature = layers_feature_sizes[layer_idx+1]
+                layer, w, b = ff_layer(input_feature, output_feature, activation_function, device)
 
-    for size in range(len(layers_feature_sizes)-1):
-        input_feature = layers_feature_sizes[size] #+ 1
-        output_feature = layers_feature_sizes[size+1]
-        # TODO: We make the input feature as we go each column
-        layer, w, b = ff_layer(input_feature, output_feature, activation_function, device)
         layers.append(layer)
         layers_parameters.extend([[w, b]])
 
