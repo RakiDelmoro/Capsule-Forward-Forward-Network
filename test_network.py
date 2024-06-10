@@ -1,15 +1,16 @@
 import torch
 
-def predicting(batched_images_with_combine_labels, network):
+def predicting(batched_images_with_combine_labels, network, capsule_wide, capsule_tall):
     batched_goodness_per_label = []
     for combined_label_in_image in batched_images_with_combine_labels:
         input_for_layer = combined_label_in_image
         layers_goodness = []
-        for layer in network:
-            layer_output = layer(input_for_layer)
-            layer_goodness = layer_output.pow(2).mean(1)
-            input_for_layer = layer_output
-            layers_goodness.append(layer_goodness)
+        for capsule_wide_index in range(capsule_wide):
+            for layer in network:
+                layer_output = layer(input_for_layer)
+                layer_goodness = layer_output.pow(2).mean(1)
+                input_for_layer = layer_output
+                layers_goodness.append(layer_goodness)
         batched_layer_goodness = sum(layers_goodness)
         each_item_in_batch_per_label_goodness = batched_layer_goodness.view(batched_layer_goodness.shape[0], 1)
         batched_goodness_per_label.append(each_item_in_batch_per_label_goodness)
