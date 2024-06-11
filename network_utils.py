@@ -35,15 +35,15 @@ def capsulate_input_feature(x: torch.Tensor, capsule_tall):
     new_input_shape = x.shape[:-1] + (capsule_tall, input_view)
     return x.view(new_input_shape)
 
-def rotate_feature(capsule_output: torch.Tensor, rotation_amount: int, layer_idx: int):
+def rotate_feature(capsule_output, rotation_amount: int, layer_idx: int):
     if layer_idx % 2 == 0:
-        # capsule_output.append(capsule_output[0][:, :rotation_amount])
-        # return torch.concat(capsule_output, dim=1)[:, rotation_amount:]
-        return capsule_output.flatten(1).roll(rotation_amount)
+        capsule_output.append(capsule_output[0][:, :rotation_amount])
+        return torch.concat(capsule_output, dim=1)[:, rotation_amount:]
+        # return capsule_output.flatten(1).roll(rotation_amount)
     else:
-        # capsule_output.insert(0, capsule_output[-rotation_amount][:, -rotation_amount:])
-        # return torch.concat(capsule_output, dim=1)[:, :-rotation_amount]
-        return capsule_output.flatten(1).roll(-rotation_amount)
+        capsule_output.insert(0, capsule_output[-rotation_amount][:, -rotation_amount:])
+        return torch.concat(capsule_output, dim=1)[:, :-rotation_amount]
+        # return capsule_output.flatten(1).roll(-rotation_amount)
 
 def print_correct_prediction(correct_prediction_list, amount_to_print):
     print(f"{GREEN}Correct prediction!{RESET}")

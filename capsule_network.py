@@ -83,7 +83,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
         for _ in range(capsule_wide):
             dataloader = train_capsule_column(dataloader)
 
-        # output = validation_forward_pass(test_image, test_label, layers, capsule_tall, capsule_wide)
+        validation_forward_pass(test_image, test_label, layers, capsule_tall, capsule_wide)
 
     return capsule_forward_pass
 
