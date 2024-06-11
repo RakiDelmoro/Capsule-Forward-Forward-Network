@@ -4,20 +4,20 @@ import numpy as np
 from layer import ff_layer
 from features import GREEN, RESET, RED
 
-def initialize_capsule_layers_and_parameters(layers_feature_sizes, input_feature, capsule_tall, activation_function, device):
+def initialize_capsule_layers_and_parameters(layers_feature_sizes, input_data_feature, capsule_tall, activation_function, device):
     layers = []
     layers_parameters = []
     for layer_idx in range(len(layers_feature_sizes)):
         first_layer = layer_idx == 0
         if first_layer:
-            first_layer_input_feature = (input_feature + input_feature % capsule_tall) // capsule_tall
+            first_layer_input_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall
             first_layer_output_feature = layers_feature_sizes[layer_idx+1]
             layer, w, b = ff_layer(first_layer_input_feature, first_layer_output_feature, activation_function, device)
         else:
             last_layer = layer_idx == len(layers_feature_sizes) - 1
             if last_layer:
                 last_layer_input_feature = layers_feature_sizes[layer_idx]
-                last_layer_output_feature = (input_feature + input_feature % capsule_tall) // capsule_tall
+                last_layer_output_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall
                 layer, w, b = ff_layer(last_layer_input_feature, last_layer_output_feature, activation_function, device)
             else:
                 input_feature = layers_feature_sizes[layer_idx]
@@ -35,13 +35,15 @@ def capsulate_input_feature(x: torch.Tensor, capsule_tall):
     new_input_shape = x.shape[:-1] + (capsule_tall, input_view)
     return x.view(new_input_shape)
 
-def rotate_feature(capsule_outputs: list, rotation_amount: int, layer_idx: int):
+def rotate_feature(capsule_output: torch.Tensor, rotation_amount: int, layer_idx: int):
     if layer_idx % 2 == 0:
-        capsule_outputs.append(capsule_outputs[0][:, :rotation_amount])
-        return torch.concat(capsule_outputs, dim=1)[:, rotation_amount:]
+        # capsule_output.append(capsule_output[0][:, :rotation_amount])
+        # return torch.concat(capsule_output, dim=1)[:, rotation_amount:]
+        return capsule_output.flatten(1).roll(rotation_amount)
     else:
-        capsule_outputs.insert(0, capsule_outputs[-rotation_amount][:, -rotation_amount:])
-        return torch.concat(capsule_outputs, dim=1)[:, :-rotation_amount]
+        # capsule_output.insert(0, capsule_output[-rotation_amount][:, -rotation_amount:])
+        # return torch.concat(capsule_output, dim=1)[:, :-rotation_amount]
+        return capsule_output.flatten(1).roll(-rotation_amount)
 
 def print_correct_prediction(correct_prediction_list, amount_to_print):
     print(f"{GREEN}Correct prediction!{RESET}")

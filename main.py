@@ -15,10 +15,10 @@ def main():
     images_with_combined_labels, labels = get_validation_data(image_for_validate, expected_for_validate)
 
     input_feature_size = HEIGHT * WIDTH
-    train_loader = DataLoader(training_data, batch_size=BATCH_SIZE, shuffle=True)
+    train_loader = DataLoader(training_data, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
 
-    hidden_layers = [100] * 100
-    model_runner = capsule_neural_network(capsule_feature_size=hidden_layers, input_feature=input_feature_size, threshold=2.0, activation_function=torch.nn.functional.relu, lr=LEARNING_RATE, device="cuda", capsule_tall=1, capsule_wide=1, rotation_amount=1)
+    hidden_layers = [100] * 50
+    model_runner = capsule_neural_network(capsule_feature_size=hidden_layers, input_feature=input_feature_size, threshold=2.0, activation_function=torch.nn.functional.relu, lr=LEARNING_RATE, device="cuda", capsule_tall=16, capsule_wide=16, rotation_amount=1)
     model_runner(train_loader, images_with_combined_labels, labels)
 
 main()
