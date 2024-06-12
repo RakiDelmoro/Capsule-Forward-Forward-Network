@@ -2,13 +2,27 @@ import torch
 from network_utils import capsulate_input_feature, rotate_feature, print_wrong_prediction, print_percentile_of_correct_probabilities, print_correct_prediction
 
 def predicting(batched_images_with_combine_labels, network, capsule_wide, capsule_tall):
+    dataset = batched_images_with_combine_labels
     batched_goodness_per_label = []
-    #for _ in range(capsule_wide):
-        #for layer in network:
-            # function to get dataset for layer
-            # Loop each dataset in batch_images_with labels to the whole layers to get the goodness
-    pass
+    for _ in range(capsule_wide):
+        layer_goodness = []
+        for i, layer in enumerate(network):
+            previous_layer_outputs = []
+            layer_goodness_per_label = []
+            for all_image_per_label in dataset:
+                capsulate_data = capsulate_input_feature(all_image_per_label, capsule_tall)
+                layer_output = layer(capsulate_data)
+                activation_each_capsule_tall = layer_output.pow(2).mean(-1)
+                goodness_per_label = activation_each_capsule_tall.mean(-1)
+                layer_goodness_per_label.append([goodness_per_label])
+                previous_layer_outputs.append(layer_output)
+            rotated_layer_outputs = []
+            for per_label_output in previous_layer_outputs:
+                input_for_next_layer = rotate_feature(capsule_output=per_label_output, rotation_amount=1, layer_idx=i)
+                rotated_layer_outputs.append(input_for_next_layer)            
+            dataset = rotated_layer_outputs
 
+    return batched_goodness_per_label
 
 def validation_forward_pass(batched_image, batched_label, network, capsule_tall, capsule_wide):
     print('validating...')
