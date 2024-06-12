@@ -14,8 +14,7 @@ def predicting(batched_images_with_combine_labels, network, capsule_wide, capsul
                 layer_output = layer(capsulate_data)
                 activation_each_capsule_tall = layer_output.pow(2).mean(-1)
                 goodness_per_label = activation_each_capsule_tall.mean(-1)
-                # TODO: Calculate before adding to the layer_goodness_per_label
-                # Calculation each list has a sum goodnes_per_label and divide
+                # TODO: average goodness per label and store to layer goodness per label
                 previous_layer_outputs.append(layer_output)
             rotated_layer_outputs = []
             for per_label_output in previous_layer_outputs:
