@@ -4,23 +4,26 @@ from network_utils import capsulate_input_feature, rotate_feature, print_wrong_p
 def predicting(batched_images_with_combine_labels, network, capsule_wide, capsule_tall):
     dataset = batched_images_with_combine_labels
     batched_goodness_per_label = []
-    for _ in range(capsule_wide):
-        layer_goodness = []
+    for c_i in range(capsule_wide):
+        layers_goodness = []
         for i, layer in enumerate(network):
             previous_layer_outputs = []
-            layer_goodness_per_label = []
+            layer_goodness_per_label = [] 
             for all_image_per_label in dataset:
                 capsulate_data = capsulate_input_feature(all_image_per_label, capsule_tall)
                 layer_output = layer(capsulate_data)
                 activation_each_capsule_tall = layer_output.pow(2).mean(-1)
                 goodness_per_label = activation_each_capsule_tall.mean(-1)
-                layer_goodness_per_label.append([goodness_per_label])
+                # TODO: Calculate before adding to the layer_goodness_per_label
+                # Calculation each list has a sum goodnes_per_label and divide
                 previous_layer_outputs.append(layer_output)
             rotated_layer_outputs = []
             for per_label_output in previous_layer_outputs:
                 input_for_next_layer = rotate_feature(capsule_output=per_label_output, rotation_amount=1, layer_idx=i)
                 rotated_layer_outputs.append(input_for_next_layer)            
             dataset = rotated_layer_outputs
+            # Layer goodness should have (number of layers)x item and each of the item has goodness per label
+            # Sum layer goodness per label for all the layers then divide by number of layers do for all labels and that's the goodness of each capsule wide
 
     return batched_goodness_per_label
 
