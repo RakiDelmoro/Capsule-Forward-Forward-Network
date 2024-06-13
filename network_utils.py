@@ -10,14 +10,14 @@ def initialize_capsule_layers_and_parameters(layers_feature_sizes, input_data_fe
     for layer_idx in range(len(layers_feature_sizes)):
         first_layer = layer_idx == 0
         if first_layer:
-            first_layer_input_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall
+            first_layer_input_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall + 1
             first_layer_output_feature = layers_feature_sizes[layer_idx+1]
             layer, w, b = ff_layer(first_layer_input_feature, first_layer_output_feature, activation_function, device)
         else:
             last_layer = layer_idx == len(layers_feature_sizes) - 1
             if last_layer:
                 last_layer_input_feature = layers_feature_sizes[layer_idx]
-                last_layer_output_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall
+                last_layer_output_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall + 1
                 layer, w, b = ff_layer(last_layer_input_feature, last_layer_output_feature, activation_function, device)
             else:
                 input_feature = layers_feature_sizes[layer_idx]
