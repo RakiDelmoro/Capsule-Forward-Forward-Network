@@ -15,7 +15,6 @@ def predicting(batched_images_with_combine_labels, network, capsule_wide, capsul
                 goodness_each_item_in_batch = capsule_tall_activation.mean(-1)
                 batch = rotate_feature(layer_output, 1, i)
                 layers_goodness.append(goodness_each_item_in_batch)
-            # each label goodness for each capsule wide
             capsule_goodness_per_label.append(sum(layers_goodness))
         batch_goodness.append(sum(capsule_goodness_per_label).view(batch.shape[0], 1))
     prediction_score = torch.concat(batch_goodness, dim=1)
