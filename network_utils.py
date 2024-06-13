@@ -16,11 +16,11 @@ def initialize_capsule_layers_and_parameters(layers_feature_sizes, input_data_fe
         else:
             last_layer = layer_idx == len(layers_feature_sizes) - 1
             if last_layer:
-                last_layer_input_feature = layers_feature_sizes[layer_idx]
-                last_layer_output_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall + 1
+                last_layer_input_feature = layers_feature_sizes[layer_idx] + 1
+                last_layer_output_feature = (input_data_feature + input_data_feature % capsule_tall) // capsule_tall 
                 layer, w, b = ff_layer(last_layer_input_feature, last_layer_output_feature, activation_function, device)
             else:
-                input_feature = layers_feature_sizes[layer_idx]
+                input_feature = layers_feature_sizes[layer_idx] + 1
                 output_feature = layers_feature_sizes[layer_idx+1]
                 layer, w, b = ff_layer(input_feature, output_feature, activation_function, device)
 
@@ -37,12 +37,8 @@ def capsulate_input_feature(x: torch.Tensor, capsule_tall):
 
 def rotate_feature(capsule_output: torch.Tensor, rotation_amount: int, layer_idx: int):
     if layer_idx % 2 == 0:
-        # capsule_output.append(capsule_output[0][:, :rotation_amount])
-        # return torch.concat(capsule_output, dim=1)[:, rotation_amount:]
         return capsule_output.flatten(1).roll(rotation_amount).detach()
     else:
-        # capsule_output.insert(0, capsule_output[-rotation_amount][:, -rotation_amount:])
-        # return torch.concat(capsule_output, dim=1)[:, :-rotation_amount]
         return capsule_output.flatten(1).roll(-rotation_amount).detach()
 
 def print_correct_prediction(correct_prediction_list, amount_to_print):
