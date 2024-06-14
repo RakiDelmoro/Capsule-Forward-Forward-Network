@@ -12,7 +12,7 @@ def predicting(batched_images_with_combine_labels, network, capsule_wide, capsul
                 capsulate_data = capsulate_input_feature(batch, capsule_tall)
                 capsule_idx_as_tensor = torch.full([capsulate_data.shape[0], capsule_tall, 1], capsule_index, device="cuda")
                 layer_output = layer(torch.concat([capsulate_data, capsule_idx_as_tensor], dim=-1))
-                capsule_tall_activation = layer_output.pow(2).mean(-1).detach()
+                capsule_tall_activation = layer_output.pow(2).mean(1).detach()
                 goodness_each_item_in_batch = capsule_tall_activation.mean(-1)
                 batch = rotate_feature(layer_output, 1, i)
                 layers_goodness.append(goodness_each_item_in_batch)
