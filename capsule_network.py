@@ -17,8 +17,8 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
             each_capsule_tall_output_for_positive_phase = layer(torch.concat([capsulate_positive_data, capsule_idx_as_tensor], dim=-1))
             each_capsule_tall_output_for_negative_phase = layer(torch.concat([capsulate_negative_data, capsule_idx_as_tensor], dim=-1))
             # activation_each_capsule shape -> [Batch, Capsule tall]
-            activation_in_each_capsule_tall_for_positive_data = each_capsule_tall_output_for_positive_phase.pow(2).mean(-1)
-            activation_in_each_capsule_tall_for_negative_data = each_capsule_tall_output_for_negative_phase.pow(2).mean(-1)
+            activation_in_each_capsule_tall_for_positive_data = each_capsule_tall_output_for_positive_phase.pow(2).mean(1)
+            activation_in_each_capsule_tall_for_negative_data = each_capsule_tall_output_for_negative_phase.pow(2).mean(1)
             # capsule_goodness shape -> [Batch]
             capsule_column_layer_goodness_for_positive_phase = activation_in_each_capsule_tall_for_positive_data.mean(-1)
             capsule_column_layer_goodness_for_negative_phase = activation_in_each_capsule_tall_for_negative_data.mean(-1)
@@ -82,15 +82,9 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
         return dataloader
     
     def capsule_forward_pass(dataloader, test_image, test_label):
-        # for capsule_wide_index in range(capsule_wide):
-        #     dataloader = train_capsule_column(dataloader, capsule_wide_index)
+        for capsule_wide_index in range(capsule_wide):
+            dataloader = train_capsule_column(dataloader, capsule_wide_index)
 
         validation_forward_pass(test_image, test_label, layers, capsule_tall, capsule_wide)
 
     return capsule_forward_pass
-
-# x = torch.randn(1, 12, device="cuda")
-# y = torch.randn(1, 12, device="cuda")
-# data = [(x, y)]
-# m = capsule_neural_network(capsule_feature_size=[20, 20, 20], input_feature=12, threshold=2.0, activation_function=torch.nn.functional.relu, lr=0.01, device="cuda", capsule_tall=2, capsule_wide=1, rotation_amount=1)
-# print(m(data))
