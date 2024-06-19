@@ -1,6 +1,6 @@
 import torch
 import statistics
-from network_utils import ff_layer
+from layer import linear_layer
 from torch.nn.functional import relu, softmax
 
 def multi_layer_perceptron(feature_sizes: list):
@@ -9,11 +9,11 @@ def multi_layer_perceptron(feature_sizes: list):
     for i in range(len(feature_sizes)-1):
         input_feature = feature_sizes[i]
         output_feature = feature_sizes[i+1]
-        layer, w, b = ff_layer(input_feature, output_feature, relu, "cuda")
+        layer, w, b = linear_layer(input_feature, output_feature, relu, "cuda")
         layers.append(layer)
         parameters.extend([w, b])
 
-    output_layer, output_w, output_b = ff_layer(in_features=feature_sizes[-1], out_features=10, activation_function=softmax, device="cuda", is_for_output=True)
+    output_layer, output_w, output_b = linear_layer(in_features=feature_sizes[-1], out_features=10, activation_function=softmax, device="cuda", is_for_output=True)
     layers.append(output_layer)
     parameters.extend([output_w, output_b])
 
