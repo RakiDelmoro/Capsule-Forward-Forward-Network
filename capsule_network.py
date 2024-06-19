@@ -16,9 +16,9 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
             # capsule_outputs shape -> [Batch, Capsule tall, Layer output feature]
             each_capsule_tall_output_for_positive_phase = layer(torch.concat([capsulate_positive_data, capsule_idx_as_tensor], dim=-1))
             each_capsule_tall_output_for_negative_phase = layer(torch.concat([capsulate_negative_data, capsule_idx_as_tensor], dim=-1))
-            # activation_each_capsule shape -> [Batch, ]
-            squared_activation_in_each_capsule_tall_for_positive_data = each_capsule_tall_output_for_positive_phase.pow(2).mean(-1)
-            squared_activation_in_each_capsule_tall_for_negative_data = each_capsule_tall_output_for_negative_phase.pow(2).mean(-1)
+            # activation_each_capsule shape -> [Batch, feature size]
+            squared_activation_in_each_capsule_tall_for_positive_data = each_capsule_tall_output_for_positive_phase.pow(2).mean(1)
+            squared_activation_in_each_capsule_tall_for_negative_data = each_capsule_tall_output_for_negative_phase.pow(2).mean(1)
             # capsule_goodness shape -> [Batch]
             capsule_column_layer_goodness_for_positive_phase = squared_activation_in_each_capsule_tall_for_positive_data.mean(-1)
             capsule_column_layer_goodness_for_negative_phase = squared_activation_in_each_capsule_tall_for_negative_data.mean(-1)
