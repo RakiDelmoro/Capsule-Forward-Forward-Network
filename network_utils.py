@@ -29,7 +29,7 @@ def initialize_capsule_layers_and_parameters(layers_feature_sizes, input_data_fe
 
     return layers, layers_parameters
 
-def capsulate_input_feature(x: torch.Tensor, capsule_tall):
+def encapsulate_input_feature(x: torch.Tensor, capsule_tall):
     assert x.shape[-1] % capsule_tall == 0, f'{capsule_tall} should divisible by {x.shape[-1]}'
     input_view = x.shape[-1] // capsule_tall
     new_input_shape = x.shape[:-1] + (capsule_tall, input_view)

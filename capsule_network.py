@@ -1,7 +1,7 @@
 import torch
 import statistics
 from test_network import validation_forward_pass
-from network_utils import initialize_capsule_layers_and_parameters, rotate_feature, capsulate_input_feature
+from network_utils import initialize_capsule_layers_and_parameters, rotate_feature, encapsulate_input_feature
 
 def capsule_neural_network(capsule_feature_size: list, input_feature: int, threshold: int, activation_function, lr: float, device: str, capsule_tall: int, capsule_wide: int, rotation_amount: int):
     layers, layers_parameters = initialize_capsule_layers_and_parameters(capsule_feature_size, input_feature, capsule_tall, activation_function, device)
@@ -10,12 +10,12 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
         loss_each_batch = []
         for positive_data, negative_data in dataloader:
             # capsuled_data shape -> [Batch, Capsule tall, Input feature // Capsule tall]
-            capsulate_positive_data = capsulate_input_feature(positive_data, capsule_tall)
-            capsulate_negative_data = capsulate_input_feature(negative_data, capsule_tall)
-            capsule_idx_as_tensor = torch.full([capsulate_positive_data.shape[0], capsule_tall, 1], capsule_index, device="cuda")
+            encapsulated_positive_data = encapsulate_input_feature(positive_data, capsule_tall)
+            encapsulated_negative_data = encapsulate_input_feature(negative_data, capsule_tall)
+            capsule_idx_as_tensor = torch.full([encapsulated_positive_data.shape[0], capsule_tall, 1], capsule_index, device="cuda")
             # capsule_outputs shape -> [Batch, Capsule tall, Layer output feature]
-            each_capsule_tall_output_for_positive_phase = layer(torch.concat([capsulate_positive_data, capsule_idx_as_tensor], dim=-1))
-            each_capsule_tall_output_for_negative_phase = layer(torch.concat([capsulate_negative_data, capsule_idx_as_tensor], dim=-1))
+            each_capsule_tall_output_for_positive_phase = layer(torch.concat([encapsulated_positive_data, capsule_idx_as_tensor], dim=-1))
+            each_capsule_tall_output_for_negative_phase = layer(torch.concat([encapsulated_negative_data, capsule_idx_as_tensor], dim=-1))
             # activation_each_capsule shape -> [Batch, feature size]
             squared_activation_in_each_capsule_tall_for_positive_data = each_capsule_tall_output_for_positive_phase.pow(2).mean(1)
             squared_activation_in_each_capsule_tall_for_negative_data = each_capsule_tall_output_for_negative_phase.pow(2).mean(1)
@@ -62,8 +62,8 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
     def forward_once_for_next_layer_in_capsule(dataloader, layer, layer_idx, capsule_index):
         previous_capsule_column_output = []
         for positive_data, negative_data in dataloader:
-            capsulated_positive_data = capsulate_input_feature(positive_data, capsule_tall)
-            capsulated_negative_data = capsulate_input_feature(negative_data, capsule_tall)
+            capsulated_positive_data = encapsulate_input_feature(positive_data, capsule_tall)
+            capsulated_negative_data = encapsulate_input_feature(negative_data, capsule_tall)
             capsule_idx_as_tensor = torch.full([capsulated_positive_data.shape[0], capsule_tall, 1], capsule_index, device="cuda")
             positive_column_capsule_outputs = layer(torch.concat([capsulated_positive_data, capsule_idx_as_tensor], dim=-1)).detach()
             negative_column_capsule_outputs = layer(torch.concat([capsulated_negative_data, capsule_idx_as_tensor], dim=-1)).detach()
@@ -72,7 +72,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
             previous_capsule_column_output.append((positive_features, negative_features))
     
         return previous_capsule_column_output
-    
+
     def train_capsule_column(dataloader, capsule_index):
         for layer_index, layer in enumerate(layers):
             optimizer = torch.optim.AdamW(layers_parameters[layer_index], lr=lr)
