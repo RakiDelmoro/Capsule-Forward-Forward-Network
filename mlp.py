@@ -9,11 +9,11 @@ def multi_layer_perceptron(feature_sizes: list):
     for i in range(len(feature_sizes)-1):
         input_feature = feature_sizes[i]
         output_feature = feature_sizes[i+1]
-        layer, w, b = linear_layer(input_feature, output_feature, relu, "cuda")
+        layer, w, b = linear_layer(input_feature, output_feature, "cuda")
         layers.append(layer)
         parameters.extend([w, b])
 
-    output_layer, output_w, output_b = linear_layer(in_features=feature_sizes[-1], out_features=10, activation_function=softmax, device="cuda", is_for_output=True)
+    output_layer, output_w, output_b = linear_layer(in_features=feature_sizes[-1], out_features=10, device="cuda")
     layers.append(output_layer)
     parameters.extend([output_w, output_b])
 

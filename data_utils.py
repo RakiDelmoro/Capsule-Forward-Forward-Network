@@ -45,4 +45,4 @@ def load_data_to_memory(filename: str):
     with (gzip.open(filename, 'rb')) as file:
         ((training_image_array, training_label_array), (validation_image_array, validation_label_array), _) = pickle.load(file, encoding="latin-1")
 
-    return torch.tensor(training_image_array, device="cuda"), torch.tensor(training_label_array, device="cuda"), torch.tensor(validation_image_array, device="cuda"), torch.tensor(validation_label_array, device="cuda")
+    return training_image_array, training_label_array, validation_image_array, validation_label_array,

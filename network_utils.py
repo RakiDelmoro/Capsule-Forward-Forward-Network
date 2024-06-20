@@ -37,9 +37,9 @@ def encapsulate_input_feature(x: torch.Tensor, capsule_tall):
 
 def rotate_feature(capsule_output: torch.Tensor, rotation_amount: int, layer_idx: int):
     if layer_idx % 2 == 0:
-        return capsule_output.flatten(1).roll(rotation_amount).detach()
+        return capsule_output.flatten(1).roll(rotation_amount)
     else:
-        return capsule_output.flatten(1).roll(-rotation_amount).detach()
+        return capsule_output.flatten(1).roll(-rotation_amount)
 
 def print_correct_prediction(correct_prediction_list, amount_to_print):
     print(f"{GREEN}Correct prediction!{RESET}")
