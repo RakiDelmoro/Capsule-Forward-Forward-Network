@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 from torch import empty
 from torch.nn import Parameter
-from torch.nn.functional import relu, softmax
+from torch.nn.functional import relu
+from torch.nn import ReLU, Softmax
 
 def ff_layer(in_features: int, out_features: int, activation_function: relu, device: str="cuda"):
     weight = Parameter(empty((out_features, in_features), device=device))
@@ -25,7 +26,12 @@ def ff_layer(in_features: int, out_features: int, activation_function: relu, dev
     
     return forward_pass, weight, bias
 
-def linear_layer(in_features: int, out_features: int, device: str):
+def linear_layer(in_features: int, out_features: int, device: str, activation_function: str):
+    if activation_function == 'relu':
+        act_func = ReLU()
+    elif activation_function == 'softmax':
+        act_func = Softmax(dim=-1)
+    
     weight = Parameter(empty((out_features, in_features), device=device))
     bias = Parameter(empty(out_features, device=device))
 
@@ -37,6 +43,6 @@ def linear_layer(in_features: int, out_features: int, device: str):
     weight_and_bias_initialization()
 
     def linear_computation(x: torch.Tensor):
-        return torch.matmul(x, weight.t()) + bias
+        return act_func(torch.matmul(x, weight.t()) + bias)
     
     return linear_computation, weight, bias
