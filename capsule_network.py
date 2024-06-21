@@ -18,7 +18,7 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
 
         return processed_dataloader
 
-    def forward_dataloader_in_layer(dataloader, layer, optimizer, number_of_capsule):
+    def forward_dataloader_in_layer(dataloader, layer, optimizer):
         loss_each_batch = []
         for positive_data, negative_data in dataloader:
             each_capsule_tall_output_for_positive_phase = layer(positive_data)
@@ -45,25 +45,26 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
         current_epoch = 0
         best_loss = None
         previous_layer_loss = None
-        while True:
-            capsule_column_loss = forward_dataloader_in_layer(dataloader, layer, optimizer, capsule_wide_index)
-            if best_loss is None:
-                best_loss = capsule_column_loss
-            elif capsule_column_loss < best_loss:
-                best_loss = capsule_column_loss
-                if previous_layer_loss is not None:
-                    if abs((previous_layer_loss / capsule_column_loss) - 1) < 0.001:
-                        bad_epoch += 1
-                    else:
-                        bad_epoch = 0
-            else:
-                bad_epoch += 1
+        for _ in range(capsule_wide_index):
+            while True:
+                capsule_column_loss = forward_dataloader_in_layer(dataloader, layer, optimizer)
+                if best_loss is None:
+                    best_loss = capsule_column_loss
+                elif capsule_column_loss < best_loss:
+                    best_loss = capsule_column_loss
+                    if previous_layer_loss is not None:
+                        if abs((previous_layer_loss / capsule_column_loss) - 1) < 0.001:
+                            bad_epoch += 1
+                        else:
+                            bad_epoch = 0
+                else:
+                    bad_epoch += 1
 
-            if bad_epoch > 5:
-                print(f"Done training layer: {layer_idx+1} EPOCH: {current_epoch}")
-                return forward_once_for_next_layer_in_capsule(dataloader, layer, layer_idx)
-            previous_layer_loss = capsule_column_loss
-            current_epoch += 1
+                if bad_epoch > 5:
+                    print(f"Done training layer: {layer_idx+1} EPOCH: {current_epoch}")
+                    return forward_once_for_next_layer_in_capsule(dataloader, layer, layer_idx)
+                previous_layer_loss = capsule_column_loss
+                current_epoch += 1
 
     def forward_once_for_next_layer_in_capsule(dataloader, layer, layer_idx):
         previous_capsule_column_output = []
@@ -82,11 +83,11 @@ def capsule_neural_network(capsule_feature_size: list, input_feature: int, thres
             optimizer = torch.optim.AdamW(layers_parameters[layer_index], lr=lr)
             dataloader = forward_layer_in_each_capsule(dataloader, layer, optimizer, layer_index, capsule_wide_index)
             layer_outputs.append(dataloader)
-        
-        return dataloader, layer_outputs
+
+        return dataloader
 
     def capsule_forward_pass(dataloader, test_image, test_label):
-        for capsule_wide_index in range(capsule_wide):
+        for capsule_wide_index in range(1, capsule_wide+1):
             dataloader = train_capsule_column(dataloader, capsule_wide_index)
 
         validation_forward_pass(test_image, test_label, layers, capsule_tall, capsule_wide)
